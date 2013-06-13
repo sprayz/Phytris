@@ -1407,6 +1407,8 @@ piezasTocadas.clear();
 		// forzamos una actualización para que el estado se cargue
 		// inmediatamente
 
+		EngineLock lock = motor.getEngineLock();
+		lock.lock();
 		
 		try {
 			motor.onUpdate(1);
@@ -1414,6 +1416,9 @@ piezasTocadas.clear();
 			
 			e.printStackTrace();
 		}
+		
+		lock.unlock();
+		
 		/*
 		 * Si es el primer cargado sacamos el menú
 		 */
