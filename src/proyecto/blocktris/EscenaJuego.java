@@ -426,8 +426,8 @@ public class EscenaJuego extends EscenaBase implements
 		
 		estadoGuardado.acabada = acabada;
 		for (IPieza p : piezasEscena) {
-
-			estadoGuardado.piezas.add(EstadoJuego.EstadoPieza.empaquetar(p));
+			if(!p.isDestruida())
+				estadoGuardado.piezas.add(EstadoJuego.EstadoPieza.empaquetar(p));
 		}
 
 		try {
@@ -695,7 +695,7 @@ public class EscenaJuego extends EscenaBase implements
 					
 					IPieza p = pi.next();
 					
-					if(!p.getCuerpo().isActive() ){
+					if(p.isDestruida() ){
 						mundo.destroyBody(p.getCuerpo());
 						pi.remove();
 					}
@@ -971,7 +971,7 @@ piezasTocadas.clear();
 					IPieza pieza = (IPieza) joints[pSceneTouchEvent.getPointerID()].getBodyB().getUserData();
 				
 				
-					if(pieza.getCuerpo().isActive() && !pieza.getCuerpo().getJointList().isEmpty()){
+					if(!pieza.isDestruida()){
 						
 						mundo.destroyJoint(joints[pSceneTouchEvent
 													.getPointerID()]);
