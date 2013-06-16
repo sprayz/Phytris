@@ -10,6 +10,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.ListIterator;
@@ -52,6 +53,7 @@ import org.andengine.entity.sprite.UncoloredSprite;
 import org.andengine.entity.text.Text;
 import org.andengine.entity.text.TextOptions;
 import org.andengine.entity.util.FPSLogger;
+import org.andengine.extension.debugdraw.DebugRenderer;
 import org.andengine.extension.physics.box2d.FixedStepPhysicsWorld;
 import org.andengine.extension.physics.box2d.PhysicsConnector;
 import org.andengine.extension.physics.box2d.PhysicsFactory;
@@ -72,6 +74,7 @@ import proyecto.blocktris.logica.fisica.piezas.IPieza;
 import proyecto.blocktris.logica.fisica.piezas.PiezaFactory;
 import proyecto.blocktris.logica.fisica.piezas.rompibles.PiezaBase;
 import proyecto.blocktris.logica.fisica.piezas.rompibles.PiezaBase.Bloque;
+import proyecto.blocktris.logica.fisica.piezas.rompibles.PiezaPalo;
 import proyecto.blocktris.recursos.BDPuntuaciones;
 import proyecto.blocktris.recursos.EstadoJuego;
 import proyecto.blocktris.recursos.EstadoJuego.EstadoPieza;
@@ -93,6 +96,7 @@ import com.badlogic.gdx.physics.box2d.ContactImpulse;
 import com.badlogic.gdx.physics.box2d.ContactListener;
 import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
+import com.badlogic.gdx.physics.box2d.JointEdge;
 import com.badlogic.gdx.physics.box2d.Manifold;
 import com.badlogic.gdx.physics.box2d.RayCastCallback;
 import com.badlogic.gdx.physics.box2d.joints.MouseJoint;
@@ -407,6 +411,14 @@ public class EscenaJuego extends EscenaBase implements
 			public void beginContact(Contact contact) {}
 		});
 		
+		
+		//codigo para ver los elementos fisicos en modo debug 
+		/*
+		DebugRenderer dd = new DebugRenderer(mundo, vbom);
+		dd.setDrawBodies(true);
+		dd.setDrawJoints(true);
+		this.attachChild(dd);
+		*/
 		this.registerUpdateHandler(timerLinea);
 		this.registerUpdateHandler(timerPieza);
 		registerUpdateHandler(mundo);
@@ -426,8 +438,9 @@ public class EscenaJuego extends EscenaBase implements
 		
 		estadoGuardado.acabada = acabada;
 		for (IPieza p : piezasEscena) {
-			if(!p.isDestruida())
+			if(!p.isDestruida()){
 				estadoGuardado.piezas.add(EstadoJuego.EstadoPieza.empaquetar(p));
+			}
 		}
 
 		try {
@@ -696,7 +709,17 @@ public class EscenaJuego extends EscenaBase implements
 					IPieza p = pi.next();
 					
 					if(p.isDestruida() ){
+						for(JointEdge je : p.getCuerpo().getJointList()){
+							
+							for(int i =0;i<joints.length;i++){
+								
+								if( joints[i] == je.joint )
+									joints[i]=null;
+							}
+						}
+						
 						mundo.destroyBody(p.getCuerpo());
+						
 						pi.remove();
 					}
 					
@@ -965,17 +988,16 @@ piezasTocadas.clear();
 			
 				
 				//nos aseguramos que lo que estamos tocando no ha sido destruido
-				if (joints[pSceneTouchEvent.getPointerID()] != null  && joints[pSceneTouchEvent.getPointerID()].getBodyB() != null) {
+				if (joints[pSceneTouchEvent.getPointerID()] != null ) {
 
-					
 					IPieza pieza = (IPieza) joints[pSceneTouchEvent.getPointerID()].getBodyB().getUserData();
-				
-				
+				/*
 					if(!pieza.isDestruida()){
 						
 						mundo.destroyJoint(joints[pSceneTouchEvent
 													.getPointerID()]);
 					}
+					*/
 					/*
 					 * !!
 					 * 
@@ -999,13 +1021,17 @@ piezasTocadas.clear();
 					 * //confirmado
 					 */
 					
+					mundo.destroyJoint(joints[pSceneTouchEvent.getPointerID()] );
+					joints[pSceneTouchEvent.getPointerID()] = null;
+					
+					
 				}
 				
-				joints[pSceneTouchEvent.getPointerID()] = null;
 				particulasPuntero[pSceneTouchEvent.getPointerID()]
-					.detachSelf();
-				particulasPuntero[pSceneTouchEvent.getPointerID()]
-						.setParticlesSpawnEnabled(false);
+						.detachSelf();
+					particulasPuntero[pSceneTouchEvent.getPointerID()]
+							.setParticlesSpawnEnabled(false);
+					
 				
 				return true;
 			}
@@ -1371,20 +1397,19 @@ piezasTocadas.clear();
 		lock.lock();
 		
 		purgarPiezas();
+		cartelPuntos.setText(Integer.toString(puntuacion));
+		pausado = true;
+		EscenaJuego.this.setChildScene(new EscenaMenu(camara, acabada,
+				EscenaJuego.this), false, true, true);
 		guardarEstado();
 		lock.unlock();
 		/*
 		 * Encargamos el abrir el menú a la siguiente actualización/fotograma
 		 */
-		motor.runOnUpdateThread(new Runnable() {
-			@Override
-			public void run() {
-				cartelPuntos.setText(Integer.toString(puntuacion));
-				pausado = true;
-				EscenaJuego.this.setChildScene(new EscenaMenu(camara, acabada,
-						EscenaJuego.this), false, true, true);
-			}
-		}, false);
+		
+				
+			
+		
 
 	}
 
